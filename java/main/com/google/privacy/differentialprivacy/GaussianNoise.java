@@ -21,8 +21,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.differentialprivacy.SummaryOuterClass.MechanismType;
 import java.security.SecureRandom;
+import java.lang.Math;
 import org.apache.commons.math3.distribution.NormalDistribution;
-
+import org.apache.commons.math3.special.Erf;
 /**
  * Generates and adds Gaussian noise to a raw piece of numerical data such that the result is
  * securely differentially private.
@@ -115,29 +116,64 @@ public class GaussianNoise implements Noise {
   }
 
   /**
-   * Returns {@link ConfidenceInterval} object with the given {@code confidenceLevel},
-   * using {@code noisedValue}, L_0 and L_inf sensitivities,
-   * and {@code epsilon} and {@code delta} for Gaussian distribution.
+   * a computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer
+   * value x from which double {@code noisedX} is computed with a probability greater or equal to 1
+   * - {@code alpha} based on the specified gaussian noise parameters.
    */
   @Override
-  public ConfidenceInterval getConfidenceInterval(
-          double noisedValue, int l0Sensitivity, double lInfSensitivity,
-          double epsilon, Double delta, double confidenceLevel){
-    // TODO: Implement confidence interval computation.
-    return null;
+  public ConfidenceInterval computeConfidenceInterval(
+      double noisedX,
+      int l0Sensitivity,
+      double lInfSensitivity,
+      double epsilon,
+      Double delta,
+      double alpha) {
+    CheckConfidenceIntervalParameters(l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
+    double l2Sensitivity = lInfSensitivity * Math.sqrt(l0Sensitivity);
+    double sigma = getSigma(l2Sensitivity, epsilon, delta);
+    return computeConfidenceInterval(noisedX, sigma, alpha);
   }
 
   /**
-   * Returns {@link ConfidenceInterval} object with integer bounds for the given {@code confidenceLevel},
-   * using integer {@code noisedValue}, L_0 and L_inf sensitivities,
-   * and {@code epsilon} and {@code delta} for Gaussian distribution.
+   * computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer
+   * value x from which long {@code noisedX} is computed with a probability greater or equal to 1 -
+   * {@code alpha} based on the specified gaussian noise parameters.
    */
   @Override
-  public ConfidenceInterval getConfidenceInterval(
-          int noisedValue, int l0Sensitivity, long lInfSensitivity,
-          double epsilon, Double delta, double confidenceLevel){
-    // TODO: Implement confidence interval computation.
-    return null;
+  public ConfidenceInterval computeConfidenceInterval(
+      long noisedX,
+      int l0Sensitivity,
+      long lInfSensitivity,
+      double epsilon,
+      Double delta,
+      double alpha) {
+    CheckConfidenceIntervalParameters(l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
+    double l2Sensitivity = lInfSensitivity * Math.sqrt((double) l0Sensitivity);
+    double sigma = getSigma(l2Sensitivity, epsilon, delta);
+    ConfidenceInterval confInt = computeConfidenceInterval((double) noisedX, sigma, alpha);
+    confInt =
+        ConfidenceInterval.create(
+            Math.round(confInt.lowerBound()), Math.round(confInt.upperBound()));
+    return confInt;
+  }
+
+  /**
+   * Returns {@link ConfidenceInterval} gaussian object with 1-{@code alpha} confidence level and
+   * {@code sigma} parameters.
+   */
+  public ConfidenceInterval computeConfidenceInterval(double noisedX, double sigma, double alpha) {
+    double z = inverseCDFGaussian(sigma, alpha / 2);
+    double lowerBound = noisedX + z;
+    double upperBound = noisedX - z;
+    return ConfidenceInterval.create(lowerBound, upperBound);
+  }
+
+  /**
+   * inverseCDFGaussian returns z with the property that Pr( Y <= z ) = p, where p is {@code
+   * confidenceLevel} and Y is a random variable.
+   */
+  private double inverseCDFGaussian(double sigma, double p) {
+    return -sigma * Math.sqrt(2) * Erf.erfcInv(2.00 * p);
   }
 
   private void checkParameters(
@@ -147,14 +183,20 @@ public class GaussianNoise implements Noise {
     DpPreconditions.checkNoiseDelta(delta, this);
   }
 
-  /**
-   * Returns the standard deviation of the Gaussian noise necessary to obtain {@code (epsilon,
-   * delta)}-differential privacy for the given L_2 sensitivity. The result will deviate from the
-   * tightest possible value sigma_tight by at most GAUSSIAN_SIGMA_ACCURACY * sigma_tight.
-   *
-   * <p>This implementation uses a binary search. Its runtime is rougly log(GAUSSIAN_SIGMA_ACCURACY)
-   * + log(max{sigma_tight / l2sensitivity, l2sensitivity / sigma_tight}).
-   */
+  private void CheckConfidenceIntervalParameters(
+      int l0Sensitivity, double lInfSensitivity, double epsilon, Double delta, double alpha) {
+    DpPreconditions.checkAlpha(alpha);
+    checkParameters(l0Sensitivity, lInfSensitivity, epsilon, delta);
+  }
+
+    /**
+     * Returns the standard deviation of the Gaussian noise necessary to obtain {@code (epsilon,
+     * delta)}-differential privacy for the given L_2 sensitivity. The result will deviate from the
+     * tightest possible value sigma_tight by at most GAUSSIAN_SIGMA_ACCURACY * sigma_tight.
+     *
+     * <p>This implementation uses a binary search. Its runtime is rougly log(GAUSSIAN_SIGMA_ACCURACY)
+     * + log(max{sigma_tight / l2sensitivity, l2sensitivity / sigma_tight}).
+     */
   private static double getSigma(double l2Sensitivity, double epsilon, double delta) {
     // We use l2sensitivity as a starting guess for the upper bound, since the required noise grows
     // linearly with sensitivity.

@@ -1,3 +1,4 @@
+
 //
 // Copyright 2020 Google LLC
 //
@@ -26,18 +27,36 @@ import javax.annotation.Nullable;
 public interface Noise {
 
   double addNoise(
-      double x, int l0Sensitivity, double lInfSensitivity, double epsilon, @Nullable Double delta);
+          double x, int l0Sensitivity, double lInfSensitivity, double epsilon, @Nullable Double delta);
 
   long addNoise(
-      long x, int l0Sensitivity, long lInfSensitivity, double epsilon, @Nullable Double delta);
+          long x, int l0Sensitivity, long lInfSensitivity, double epsilon, @Nullable Double delta);
 
-  ConfidenceInterval getConfidenceInterval(
-          double noisedValue, int l0Sensitivity, double lInfSensitivity,
-          double epsilon, @Nullable Double delta, double confidenceLevel);
+  /**
+   * computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer value x from which
+   * double {@code noisedX} is computed with a probability greater or equal to 1 - {@code alpha} based on the specified
+   * gaussian noise parameters.
+   */
+  ConfidenceInterval computeConfidenceInterval(
+          double noisedX,
+          int l0Sensitivity,
+          double lInfSensitivity,
+          double epsilon,
+          Double delta,
+          double alpha);
 
-  ConfidenceInterval getConfidenceInterval(
-          int noisedValue, int l0Sensitivity, long lInfSensitivity,
-          double epsilon, @Nullable Double delta, double confidenceLevel);
+  /**
+   * computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer value x from which
+   * long {@code noisedX} is computed with a probability greater or equal to 1 - {@code alpha} based on the specified
+   * gaussian noise parameters.
+   */
+  ConfidenceInterval computeConfidenceInterval(
+          long noisedX,
+          int l0Sensitivity,
+          long lInfSensitivity,
+          double epsilon,
+          Double delta,
+          double alpha);
 
   MechanismType getMechanismType();
 

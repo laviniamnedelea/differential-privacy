@@ -30,18 +30,33 @@ public class DpPreconditions {
 
   private DpPreconditions() {}
 
+  static void checkEpsilonVeryStrict(double epsilon) {
+    checkArgument(
+            epsilon >= 1.0 / (1L << 50) && epsilon < POSITIVE_INFINITY,
+            "epsilon must be at least 2^-50 (and cannot be infinity). Provided value: %s",
+            epsilon);
+  }
+
+  static void checkEpsilonStrict(double epsilon) {
+    checkArgument(
+            epsilon > 0 && epsilon < POSITIVE_INFINITY,
+            "epsilon must be strictly positive (and cannot be infinity). Provided value: %s",
+            epsilon);
+  }
+
   static void checkEpsilon(double epsilon) {
-    checkArgument(epsilon >= 1.0 / (1L << 50)
-       && epsilon < POSITIVE_INFINITY,
-        "epsilon must be > 0 and < infinity. Provided value: %s", epsilon);
+    checkArgument(
+            epsilon >= 0 && epsilon < POSITIVE_INFINITY,
+            "epsilon must be nonnegative (and cannot be infinity). Provided value: %s",
+            epsilon);
   }
 
   static void checkNoiseDelta(Double delta, Noise noise) {
     if (noise instanceof LaplaceNoise) {
       checkArgument(
-          delta == null,
-          "delta should not be set when Laplace noise is used. Provided value: %s",
-          delta);
+              delta == null,
+              "delta should not be set when Laplace noise is used. Provided value: %s",
+              delta);
     } else {
       checkNotNull(delta);
       checkDelta(delta);
@@ -55,17 +70,21 @@ public class DpPreconditions {
   static void checkSensitivities(int l0Sensitivity, double lInfSensitivity) {
     checkL0Sensitivity(l0Sensitivity);
     checkArgument(
-        lInfSensitivity > 0, "lInfSensitivity must be > 0. Provided value: %s", lInfSensitivity);
+            lInfSensitivity > 0 && !Double.isInfinite(lInfSensitivity) && !Double.isNaN(lInfSensitivity),
+            "lInfSensitivity must be > 0 (and cannot be Infinity). Provided value: %s",
+            lInfSensitivity);
   }
 
   static void checkL0Sensitivity(int l0Sensitivity) {
     checkArgument(
-        l0Sensitivity > 0, "l0Sensitivity must be > 0. Provided value: %s", l0Sensitivity);
+            l0Sensitivity > 0, "l0Sensitivity must be > 0. Provided value: %s", l0Sensitivity);
   }
 
   static void checkL1Sensitivity(double l1Sensitivity) {
     checkArgument(
-        l1Sensitivity > 0, "l1Sensitivity must be > 0. Provided value: %s", l1Sensitivity);
+            l1Sensitivity > 0 && !Double.isInfinite(l1Sensitivity),
+            "l1Sensitivity must be > 0 (and cannot be Infinity). Provided value: %s",
+            l1Sensitivity);
   }
 
   static void checkMaxPartitionsContributed(int maxPartitionsContributed) {
@@ -76,78 +95,79 @@ public class DpPreconditions {
 
   static void checkMaxContributionsPerPartition(int maxContributionsPerPartition) {
     checkArgument(
-        maxContributionsPerPartition > 0,
-        "maxContributionsPerPartitions must be > 0. Provided value: %s",
-        maxContributionsPerPartition);
+            maxContributionsPerPartition > 0,
+            "maxContributionsPerPartitions must be > 0. Provided value: %s",
+            maxContributionsPerPartition);
   }
 
   static void checkBounds(double lower, double upper) {
     checkArgument(
-        upper >= lower,
-        "The upper bound should be greater than the lower bound. Provided values: "
-            + "lower = %s upper = %s",
-        lower,
-        upper);
+            upper >= lower,
+            "The upper bound should be greater than the lower bound. Provided values: "
+                    + "lower = %s upper = %s",
+            lower,
+            upper);
     checkArgument(isFinite(lower) && isFinite(upper),
-        "Lower and upper bounds should be finite. Provided values: "
-            + "lower = %s upper = %s",
-        lower,
-        upper);
+            "Lower and upper bounds should be finite. Provided values: "
+                    + "lower = %s upper = %s",
+            lower,
+            upper);
   }
 
   static void checkMergeDeltaAreEqual(@Nullable Double delta1, double delta2) {
     if (delta1 != null) {
       checkArgument(Double.compare(delta1, delta2) == 0,
-          "Failed to merge: unequal values of delta. "
-              + "delta1 = %s, delta2 = %s", delta1, delta2);
+              "Failed to merge: unequal values of delta. "
+                      + "delta1 = %s, delta2 = %s", delta1, delta2);
     } else {
       checkArgument(Double.compare(delta2, 0.0) == 0,
-          "Failed to merge: unequal values of delta. "
-              + "delta1 = %s, delta2 = %s", delta1, delta2);
+              "Failed to merge: unequal values of delta. "
+                      + "delta1 = %s, delta2 = %s", delta1, delta2);
     }
   }
 
   static void checkMergeEpsilonAreEqual(double epsilon1, double epsilon2) {
     checkArgument(Double.compare(epsilon1, epsilon2) == 0,
-        "Failed to merge: unequal values of epsilon. "
-            + "epsilon1 = %s, epsilon2 = %s", epsilon1, epsilon2);
+            "Failed to merge: unequal values of epsilon. "
+                    + "epsilon1 = %s, epsilon2 = %s", epsilon1, epsilon2);
   }
 
   static void checkMergeBoundsAreEqual(
-      double lower1, double lower2, double upper1, double upper2) {
+          double lower1, double lower2, double upper1, double upper2) {
     checkArgument(Double.compare(lower1, lower2) == 0,
-        "Failed to merge: unequal lower bounds. "
-            + "lower1 = %s, lower2 = %s", lower1, lower2);
+            "Failed to merge: unequal lower bounds. "
+                    + "lower1 = %s, lower2 = %s", lower1, lower2);
     checkArgument(Double.compare(upper1, upper2) == 0,
-        "Failed to merge: unequal upper bounds. "
-            + "upper1 = %s, upper2 = %s", upper1, upper2);
+            "Failed to merge: unequal upper bounds. "
+                    + "upper1 = %s, upper2 = %s", upper1, upper2);
   }
 
   static void checkMergeMaxContributionsPerPartitionAreEqual(
-      int maxContributionsPerPartition1, int maxContributionsPerPartition2) {
+          int maxContributionsPerPartition1, int maxContributionsPerPartition2) {
     checkArgument(maxContributionsPerPartition1 == maxContributionsPerPartition2,
-        "Failed to merge: unequal values of maxContributionsPerPartition. "
-            + "maxContributionsPerPartition1 = %s, maxContributionsPerPartition2 = %s",
-        maxContributionsPerPartition1, maxContributionsPerPartition2);
+            "Failed to merge: unequal values of maxContributionsPerPartition. "
+                    + "maxContributionsPerPartition1 = %s, maxContributionsPerPartition2 = %s",
+            maxContributionsPerPartition1, maxContributionsPerPartition2);
   }
 
   static void checkMergeMaxPartitionsContributedAreEqual(
-      int maxPartitionsContributed1, int maxPartitionsContributed2) {
+          int maxPartitionsContributed1, int maxPartitionsContributed2) {
     checkArgument(maxPartitionsContributed1 == maxPartitionsContributed2,
-        "Failed to merge: unequal values of maxPartitionsContributed. "
-            + "maxPartitionsContributed1 = %s, maxPartitionsContributed2 = %s",
-        maxPartitionsContributed1, maxPartitionsContributed2);
+            "Failed to merge: unequal values of maxPartitionsContributed. "
+                    + "maxPartitionsContributed1 = %s, maxPartitionsContributed2 = %s",
+            maxPartitionsContributed1, maxPartitionsContributed2);
   }
 
   static void checkMergeMechanismTypesAreEqual(MechanismType type1, MechanismType type2) {
     checkArgument(Objects.equals(type1, type2),
-        "Failed to merge: unequal mechanism types. type1 = %s, type2 = %s", type1, type2);
+            "Failed to merge: unequal mechanism types. type1 = %s, type2 = %s", type1, type2);
   }
 
-  static void checkConfidenceLevel(double confidenceLevel){
+  static void checkAlpha(double alpha) {
     checkArgument(
-            0 <= confidenceLevel && confidenceLevel <= 1 && !Double.isNaN(confidenceLevel),
-            "confidenceLevel is %s, should be between 0 and 1 (and cannot be NaN)",
-            confidenceLevel);
+        0 < alpha && alpha < 1 && !Double.isNaN(alpha),
+        "confidenceLevel should be between 0 and 1 (exclusive and cannot be NaN). "
+            + "Provided value: %s",
+        alpha);
   }
 }

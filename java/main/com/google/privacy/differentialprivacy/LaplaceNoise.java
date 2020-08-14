@@ -126,9 +126,9 @@ public class LaplaceNoise implements Noise {
    * noise. Moreover, {@code epsilon} must be at least 2^-50.
    */
   @Override
-  public ConfidenceInterval getConfidenceInterval(
+  public ConfidenceInterval computeConfidenceInterval(
           double noisedValue, int l0Sensitivity, double lInfSensitivity,
-          double epsilon, @Nullable Double delta, double confidenceLevel){
+          double epsilon, @Nullable Double delta, double alpha){
     // TODO: Implement confidence interval computation.
     return null;
   }
@@ -141,9 +141,9 @@ public class LaplaceNoise implements Noise {
    * noise. Moreover, {@code epsilon} must be at least 2^-50.
    */
   @Override
-  public ConfidenceInterval getConfidenceInterval(
-          int noisedValue, int l0Sensitivity, long lInfSensitivity,
-          double epsilon, @Nullable Double delta, double confidenceLevel){
+  public ConfidenceInterval computeConfidenceInterval(
+          long noisedValue, int l0Sensitivity, long lInfSensitivity,
+          double epsilon, @Nullable Double delta, double alpha){
     // TODO: Implement confidence interval computation.
     return null;
   }
