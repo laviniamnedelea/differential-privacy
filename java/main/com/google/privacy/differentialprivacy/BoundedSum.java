@@ -57,7 +57,7 @@ public class BoundedSum {
 
   private final Params params;
   private double sum;
-
+  private static final Noise laplace = new LaplaceNoise();
   // Was the sum returned to the user?
   private boolean resultReturned;
 
@@ -102,6 +102,54 @@ public class BoundedSum {
     }
 
     return e;
+  }
+
+  public ConfidenceInterval computeConfidenceInterval(
+      long noisedSum,
+      int l0Sensitivity,
+      long lInfSensitivity,
+      double epsilon,
+      Double delta,
+      double alpha) {
+    if (!resultReturned) {
+      throw new IllegalStateException("Noised sum must be computed before calling this function.");
+    }
+    ConfidenceInterval confInt =
+        laplace.computeConfidenceInterval(
+            noisedSum, l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
+    if ((params.lower() < 0) && (params.upper() < 0)) {
+      if (confInt.lowerBound() > 0) confInt = confInt.create(0, confInt.upperBound());
+      if (confInt.upperBound() > 0) confInt = confInt.create(confInt.lowerBound(), 0);
+    }
+    if ((params.lower() > 0) && (params.upper() > 0)) {
+      if (confInt.lowerBound() < 0) confInt = confInt.create(0, confInt.upperBound());
+      if (confInt.upperBound() < 0) confInt = confInt.create(confInt.lowerBound(), 0);
+    }
+    return confInt.create(Math.round(confInt.lowerBound()), Math.round(confInt.upperBound()));
+  }
+
+  public ConfidenceInterval computeConfidenceInterval(
+          double noisedSum,
+          int l0Sensitivity,
+          long lInfSensitivity,
+          double epsilon,
+          Double delta,
+          double alpha) {
+    if (!resultReturned) {
+      throw new IllegalStateException("Noised sum must be computed before calling this function.");
+    }
+    ConfidenceInterval confInt =
+            laplace.computeConfidenceInterval(
+                    noisedSum, l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
+    if ((params.lower() < 0) && (params.upper() < 0)) {
+      if (confInt.lowerBound() > 0) confInt = confInt.create(0, confInt.upperBound());
+      if (confInt.upperBound() > 0) confInt = confInt.create(confInt.lowerBound(), 0);
+    }
+    if ((params.lower() > 0) && (params.upper() > 0)) {
+      if (confInt.lowerBound() < 0) confInt = confInt.create(0, confInt.upperBound());
+      if (confInt.upperBound() < 0) confInt = confInt.create(confInt.lowerBound(), 0);
+    }
+    return confInt.create(confInt.lowerBound(), confInt.upperBound());
   }
 
   /**

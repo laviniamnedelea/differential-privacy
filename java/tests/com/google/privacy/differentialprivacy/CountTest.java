@@ -45,7 +45,7 @@ import org.mockito.junit.MockitoRule;
  * Tests behavior of {@link Count}. The test mocks a {@link Noise} instance to always generate zero
  * noise.
  *
- * <p>Statistical and DP properties of the algorithm are tested in {@link CountDpTest}.
+ * <p>Statistical and DP properties of the algorithm are tested in {@link CountTest}.
  */
 @RunWith(JUnit4.class)
 public class CountTest {
@@ -512,4 +512,25 @@ public class CountTest {
     // equal to the raw count.
     assertThat(stats.mean()).isWithin(sampleTolerance).of((double) rawCount);
   }
+
+  @Test
+  public void computeConfidenceInterval() {
+    // Mock the noise mechanism.
+    count =
+            Count.builder()
+
+                    .epsilon(EPSILON)
+                    .delta(DELTA)
+                    .noise(noise)
+                    .maxPartitionsContributed(1)
+                    .build();
+    count.incrementBy(1);
+    count.computeResult();
+    when(noise.computeConfidenceInterval(anyDouble(), anyInt(), anyLong(), anyDouble(), anyDouble(), anyDouble()))
+            .thenAnswer(invocation -> ConfidenceInterval.create(-5,0));
+    assertThat(count.computeConfidenceInterval(anyDouble())).isEqualTo(ConfidenceInterval.create(0,0));
+  }
+
 }
+
+

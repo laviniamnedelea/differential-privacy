@@ -51,7 +51,6 @@ import javax.annotation.Nullable;
 public class Count {
   private final Params params;
   private long rawCount;
-
   // Was the count returned to the user?
   private boolean resultReturned;
 
@@ -81,8 +80,18 @@ public class Count {
     this.rawCount += count;
   }
 
+  public ConfidenceInterval computeConfidenceInterval(double alpha) {
+    if (!resultReturned) {
+      throw new IllegalStateException("Noised count must be computed.");
+    }
+    ConfidenceInterval confInt =
+        params.noise().computeConfidenceInterval(
+            params.noisedCount, params.maxPartitionsContributed(), params.maxContributionsPerPartition(), params.epsilon(), params.delta(), alpha);
+    confInt = ConfidenceInterval.create(Math.round(Math.max(0, confInt.lowerBound())), Math.round(Math.max(0, confInt.upperBound())));
+    return confInt;
+  }
+
   /**
-   * Calculates and returns a differentially private count of elements added using {@link
    * #increment} and {@link #incrementBy}. The method can be called only once for a given collection
    * of elements. All subsequent calls will throw an exception.
    *
@@ -97,6 +106,7 @@ public class Count {
     }
 
     resultReturned = true;
+
     return params
         .noise()
         .addNoise(
@@ -175,6 +185,8 @@ public class Count {
 
   @AutoValue
   public abstract static class Params {
+    public long noisedCount;
+
     abstract Noise noise();
 
     abstract double epsilon();
