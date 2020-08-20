@@ -166,8 +166,8 @@ public class DpPreconditions {
   static void checkAlpha(double alpha) {
     checkArgument(
         0 < alpha && alpha < 1 && !Double.isNaN(alpha),
-        "confidenceLevel should be between 0 and 1 (exclusive and cannot be NaN). "
-            + "Provided value: %s",
+        "confidenceLevel should be between 0 and 1 and cannot be NaN). "
+            + "Provided alpha value: %s",
         alpha);
   }
 }

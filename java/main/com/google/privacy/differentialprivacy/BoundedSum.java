@@ -57,7 +57,8 @@ public class BoundedSum {
 
   private final Params params;
   private double sum;
-  private static final Noise laplace = new LaplaceNoise();
+  private long noisedCount;
+
   // Was the sum returned to the user?
   private boolean resultReturned;
 
@@ -104,54 +105,6 @@ public class BoundedSum {
     return e;
   }
 
-  public ConfidenceInterval computeConfidenceInterval(
-      long noisedSum,
-      int l0Sensitivity,
-      long lInfSensitivity,
-      double epsilon,
-      Double delta,
-      double alpha) {
-    if (!resultReturned) {
-      throw new IllegalStateException("Noised sum must be computed before calling this function.");
-    }
-    ConfidenceInterval confInt =
-        laplace.computeConfidenceInterval(
-            noisedSum, l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
-    if ((params.lower() < 0) && (params.upper() < 0)) {
-      if (confInt.lowerBound() > 0) confInt = confInt.create(0, confInt.upperBound());
-      if (confInt.upperBound() > 0) confInt = confInt.create(confInt.lowerBound(), 0);
-    }
-    if ((params.lower() > 0) && (params.upper() > 0)) {
-      if (confInt.lowerBound() < 0) confInt = confInt.create(0, confInt.upperBound());
-      if (confInt.upperBound() < 0) confInt = confInt.create(confInt.lowerBound(), 0);
-    }
-    return confInt.create(Math.round(confInt.lowerBound()), Math.round(confInt.upperBound()));
-  }
-
-  public ConfidenceInterval computeConfidenceInterval(
-          double noisedSum,
-          int l0Sensitivity,
-          long lInfSensitivity,
-          double epsilon,
-          Double delta,
-          double alpha) {
-    if (!resultReturned) {
-      throw new IllegalStateException("Noised sum must be computed before calling this function.");
-    }
-    ConfidenceInterval confInt =
-            laplace.computeConfidenceInterval(
-                    noisedSum, l0Sensitivity, lInfSensitivity, epsilon, delta, alpha);
-    if ((params.lower() < 0) && (params.upper() < 0)) {
-      if (confInt.lowerBound() > 0) confInt = confInt.create(0, confInt.upperBound());
-      if (confInt.upperBound() > 0) confInt = confInt.create(confInt.lowerBound(), 0);
-    }
-    if ((params.lower() > 0) && (params.upper() > 0)) {
-      if (confInt.lowerBound() < 0) confInt = confInt.create(0, confInt.upperBound());
-      if (confInt.upperBound() < 0) confInt = confInt.create(confInt.lowerBound(), 0);
-    }
-    return confInt.create(confInt.lowerBound(), confInt.upperBound());
-  }
-
   /**
    * Computes and returns a differentially private sum of the elements added via {@link #addEntry}
    * and {@link #addEntries}. The method can be called only once for a given collection of elements.
@@ -176,6 +129,35 @@ public class BoundedSum {
     return params
         .noise()
         .addNoise(sum, getL0Sensitivity(), lInfSensitivity, params.epsilon(), params.delta());
+  }
+
+  public ConfidenceInterval computeConfidenceInterval(double alpha) {
+    if (!resultReturned) {
+      throw new IllegalStateException("Noised sum must be computed before calling this function.");
+    }
+    ConfidenceInterval confInt =
+        params
+            .noise()
+            .computeConfidenceInterval(
+                this.sum,
+                getL0Sensitivity(),
+                getLInfSensitivity(
+                    params.lower(), params.upper(), params.maxContributionsPerPartition()),
+                params.epsilon(),
+                params.delta(),
+                alpha);
+    if ((params.lower() < 0) && (params.upper() < 0)) {
+      if (confInt.lowerBound() > 0) confInt = ConfidenceInterval.create(0, confInt.upperBound());
+      if (confInt.upperBound() > 0) confInt = ConfidenceInterval.create(confInt.lowerBound(), 0);
+    }
+    if ((params.lower() > 0) && (params.upper() > 0)) {
+      if (confInt.lowerBound() < 0) confInt = ConfidenceInterval.create(0, confInt.upperBound());
+      if (confInt.upperBound() < 0) confInt = ConfidenceInterval.create(confInt.lowerBound(), 0);
+    }
+    if (sum == (int) sum)
+      return ConfidenceInterval.create(
+          Math.round(confInt.lowerBound()), Math.round(confInt.upperBound()));
+    return confInt.create(confInt.lowerBound(), confInt.upperBound());
   }
 
   /**

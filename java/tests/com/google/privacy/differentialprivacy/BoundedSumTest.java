@@ -21,9 +21,8 @@ import static com.google.differentialprivacy.SummaryOuterClass.MechanismType.GAU
 import static com.google.differentialprivacy.SummaryOuterClass.MechanismType.LAPLACE;
 import static java.lang.Double.NaN;
 import static org.junit.Assert.assertThrows;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -556,7 +555,7 @@ public class BoundedSumTest {
     testForBias(sumBuilder, /* rawEntry */ -1.0, /* variance */ 11.735977);
   }
 
-    @Test
+  @Test
   public void addNoise_laplaceNoiseDefaultParametersEmptySum_isUnbiased() {
     BoundedSum.Params.Builder sumBuilder =
         BoundedSum.builder()
@@ -678,4 +677,28 @@ public class BoundedSumTest {
     // equal to the raw count.
     assertThat(stats.mean()).isWithin(sampleTolerance).of(rawEntry);
   }
+
+
+  @Test
+  public void computeConfidenceInterval() {
+    sum =
+            BoundedSum.builder()
+                    .epsilon(EPSILON)
+                    .delta(DELTA)
+                    .noise(noise)
+                    .maxPartitionsContributed(1)
+                    .lower(-5)
+                    .upper(-1)
+                    .build();
+    when(noise.computeConfidenceInterval(
+            anyDouble(), anyInt(), anyDouble(), anyDouble(), anyDouble(), anyDouble()))
+            .thenReturn(ConfidenceInterval.create(-5,3));
+    sum.computeResult();
+
+    // the result interval = (-5, 3), but it should be clamped to (0, 3)
+    assertThat(sum.computeConfidenceInterval(0.152145599))
+            .isEqualTo(ConfidenceInterval.create(-5, 0));
+  }
+
+
 }

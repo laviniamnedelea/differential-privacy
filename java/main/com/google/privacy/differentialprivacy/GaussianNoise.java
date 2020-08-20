@@ -162,7 +162,7 @@ public class GaussianNoise implements Noise {
    * {@code sigma} parameters.
    */
   public ConfidenceInterval computeConfidenceInterval(double noisedX, double sigma, double alpha) {
-    double z = inverseCDFGaussian(sigma, alpha / 2);
+    double z = inverseCDFGaussian(sigma, alpha / 2); // z holds a negative value.
     double lowerBound = noisedX + z;
     double upperBound = noisedX - z;
     return ConfidenceInterval.create(lowerBound, upperBound);
