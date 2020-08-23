@@ -70,7 +70,7 @@ public class DpPreconditions {
   static void checkSensitivities(int l0Sensitivity, double lInfSensitivity) {
     checkL0Sensitivity(l0Sensitivity);
     checkArgument(
-            lInfSensitivity > 0 && !Double.isInfinite(lInfSensitivity) && !Double.isNaN(lInfSensitivity),
+            lInfSensitivity > 0 && !Double.isInfinite(lInfSensitivity),
             "lInfSensitivity must be > 0 (and cannot be Infinity). Provided value: %s",
             lInfSensitivity);
   }
@@ -165,9 +165,9 @@ public class DpPreconditions {
 
   static void checkAlpha(double alpha) {
     checkArgument(
-        0 < alpha && alpha < 1 && !Double.isNaN(alpha),
-        "confidenceLevel should be between 0 and 1 (exclusive and cannot be NaN). "
-            + "Provided value: %s",
-        alpha);
+            0 < alpha && alpha < 1 && !Double.isNaN(alpha),
+            "alpha should be between 0 and 1 and cannot be NaN). "
+                    + "Provided alpha value: %s",
+            alpha);
   }
 }

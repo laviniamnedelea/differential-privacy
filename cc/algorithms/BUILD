@@ -267,6 +267,7 @@ cc_library(
     deps = [
         ":algorithm",
         ":numerical-mechanisms",
+        ":util",
         "//base:status",
         "@com_google_differential_privacy//proto:summary_cc_proto",
         "@com_google_protobuf//:cc_wkt_protos",
@@ -408,6 +409,7 @@ cc_library(
     deps = [
         ":algorithm",
         ":numerical-mechanisms",
+        ":util",
         "//base:status",
         "//proto:util-lib",
         "@com_google_protobuf//:cc_wkt_protos",
@@ -486,5 +488,29 @@ cc_test(
         ":distributions",
         "@com_google_benchmark//:benchmark_main",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "partition-selection",
+    hdrs = ["partition-selection.h"],
+    copts = ["-Wno-sign-compare"],
+    deps = [
+        ":numerical-mechanisms",
+        ":util",
+        ":rand",
+        "//base:status",
+        "//base:statusor"
+    ],
+)
+
+cc_test(
+    name = "partition-selection_test",
+    srcs = ["partition-selection_test.cc"],
+    copts = ["-Wno-sign-compare"],
+    deps = [
+        ":partition-selection",
+        ":numerical-mechanisms-testing",
+        "@com_google_googletest//:gtest_main",
     ],
 )

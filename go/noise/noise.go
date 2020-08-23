@@ -18,6 +18,8 @@
 package noise
 
 import (
+	"math"
+
 	log "github.com/golang/glog"
 )
 
@@ -55,6 +57,17 @@ func ToKind(n Noise) Kind {
 		log.Warningf("ToKind: unknown Noise (%v) specified", n)
 	}
 	return GaussianNoise
+}
+
+// ConfidenceInterval holds lower and upper bounds as float64 for the confidence interval.
+type ConfidenceInterval struct {
+	LowerBound, UpperBound float64
+}
+
+// toInt64 rounds the lower and upper bounds of a ConfidenceInterval struct for integer
+// valued noise operations.
+func (confInt ConfidenceInterval) toInt64() ConfidenceInterval {
+	return ConfidenceInterval{LowerBound: math.Round(confInt.LowerBound), UpperBound: math.Round(confInt.UpperBound)}
 }
 
 // Noise is an interface for primitives that add noise to data to make it differentially private.
@@ -99,5 +112,15 @@ type Noise interface {
 	//
 	// satisfies (epsilon,noiseDelta+thresholdDelta)-differential privacy under the
 	// given assumptions of L_0 and L_∞ sensitivities.
-	Threshold(l0Sensitivity int64, lInfSensitivity, epsilon, noiseDelta, thesholdDelta float64) float64
+	Threshold(l0Sensitivity int64, lInfSensitivity, epsilon, noiseDelta, thresholdDelta float64) float64
+
+	// confidenceIntervalInt64 will return a ConfidenceInterval struct with the given
+	// confidenceLevel, using the int64 noisedValue, l0Sensitivity, lInfSensitivity int64 and
+	// epsilon, delta float64 for the distribution.
+	computeConfidenceIntervalInt64(noisedValue, l0Sensitivity, lInfSensitivity int64, epsilon, delta, confidenceLevel float64) (ConfidenceInterval, error)
+
+	// confidenceIntervalFloat64 will return a ConfidenceInterval struct with the given
+	// confidenceLevel, using the float64 noisedValue, l0Sensitivity int64 and lInfSensitivity,
+	// epsilon, delta float64 for the distribution.
+	computeConfidenceIntervalFloat64(noisedValue float64, l0Sensitivity int64, lInfSensitivity, epsilon, delta, confidenceLevel float64) (ConfidenceInterval, error)
 }
