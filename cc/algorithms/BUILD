@@ -41,6 +41,7 @@ cc_test(
     copts = ["-Wno-sign-compare"],
     deps = [
         ":algorithm",
+        "//base:statusor",
         "//base/testing:status_matchers",
         "@com_google_googletest//:gtest_main",
     ],
@@ -282,6 +283,7 @@ cc_test(
     deps = [
         ":count",
         ":numerical-mechanisms-testing",
+        "//base:statusor",
         "//base/testing:proto_matchers",
         "//base/testing:status_matchers",
         "@com_google_googletest//:gtest_main",
@@ -300,6 +302,7 @@ cc_library(
         "//base:logging",
         "//base:status",
         "//base:statusor",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -327,6 +330,7 @@ cc_library(
     deps = [
         ":rand",
         ":util",
+        "//base:logging",
         "//base:status",
         "//base:statusor",
         "@com_google_absl//absl/memory",
@@ -359,8 +363,14 @@ cc_library(
     deps = [
         ":distributions",
         ":util",
+        "//base:logging",
         "//base:status",
+        "//base:statusor",
         "@com_google_differential_privacy//proto:confidence_interval_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
     ],
 )
 
@@ -372,6 +382,7 @@ cc_test(
     deps = [
         ":distributions",
         ":numerical-mechanisms",
+        "//base:statusor",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -451,6 +462,7 @@ cc_test(
         ":algorithm",
         ":approx-bounds",
         ":bounded-algorithm",
+        "//base:statusor",
         "//base/testing:status_matchers",
         "@com_google_googletest//:gtest_main",
     ],
@@ -488,5 +500,29 @@ cc_test(
         ":distributions",
         "@com_google_benchmark//:benchmark_main",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "partition-selection",
+    hdrs = ["partition-selection.h"],
+    copts = ["-Wno-sign-compare"],
+    deps = [
+        ":numerical-mechanisms",
+        ":rand",
+        ":util",
+        "//base:status",
+        "//base:statusor",
+    ],
+)
+
+cc_test(
+    name = "partition-selection_test",
+    srcs = ["partition-selection_test.cc"],
+    copts = ["-Wno-sign-compare"],
+    deps = [
+        ":numerical-mechanisms-testing",
+        ":partition-selection",
+        "@com_google_googletest//:gtest_main",
     ],
 )
