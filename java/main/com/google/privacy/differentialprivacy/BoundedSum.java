@@ -57,7 +57,7 @@ public class BoundedSum {
 
   private final Params params;
   private double sum;
-  private long noisedCount;
+  private double noisedSum;
 
   // Was the sum returned to the user?
   private boolean resultReturned;
@@ -126,9 +126,11 @@ public class BoundedSum {
     resultReturned = true;
     double lInfSensitivity =
         getLInfSensitivity(params.lower(), params.upper(), params.maxContributionsPerPartition());
-    return params
-        .noise()
-        .addNoise(sum, getL0Sensitivity(), lInfSensitivity, params.epsilon(), params.delta());
+    noisedSum =
+        params
+            .noise()
+            .addNoise(sum, getL0Sensitivity(), lInfSensitivity, params.epsilon(), params.delta());
+    return noisedSum;
   }
 
   public ConfidenceInterval computeConfidenceInterval(double alpha) {
@@ -139,18 +141,17 @@ public class BoundedSum {
         params
             .noise()
             .computeConfidenceInterval(
-                this.sum,
-                getL0Sensitivity(),
-                getLInfSensitivity(
-                    params.lower(), params.upper(), params.maxContributionsPerPartition()),
+                noisedSum,
+                params.maxPartitionsContributed(),
+                (double) params.maxContributionsPerPartition(),
                 params.epsilon(),
                 params.delta(),
                 alpha);
-    if ((params.lower() < 0) && (params.upper() < 0)) {
+    if ((params.lower() < 0) && (params.upper() <= 0)) {
       if (confInt.lowerBound() > 0) confInt = ConfidenceInterval.create(0, confInt.upperBound());
       if (confInt.upperBound() > 0) confInt = ConfidenceInterval.create(confInt.lowerBound(), 0);
     }
-    if ((params.lower() > 0) && (params.upper() > 0)) {
+    else if ((params.lower() >= 0) && (params.upper() > 0)) {
       if (confInt.lowerBound() < 0) confInt = ConfidenceInterval.create(0, confInt.upperBound());
       if (confInt.upperBound() < 0) confInt = ConfidenceInterval.create(confInt.lowerBound(), 0);
     }

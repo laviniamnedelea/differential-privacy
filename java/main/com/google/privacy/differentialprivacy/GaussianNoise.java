@@ -116,7 +116,7 @@ public class GaussianNoise implements Noise {
   }
 
   /**
-   * a computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer
+   * computeConfidenceInterval computes a {@link ConfidenceInterval} that contains the raw integer
    * value x from which double {@code noisedX} is computed with a probability greater or equal to 1
    * - {@code alpha} based on the specified gaussian noise parameters.
    */

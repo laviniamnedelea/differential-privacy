@@ -538,7 +538,7 @@ public class CountTest {
   }
 
   @Test
-  public void computeConfidenceInterval_negativeLower() {
+  public void computeConfidenceInterval_negativeLowerBound() {
     when(noise.computeConfidenceInterval(
             anyLong(), anyInt(), anyLong(), anyDouble(), anyDouble(), anyDouble()))
             .thenReturn(ConfidenceInterval.create(-5,8));
@@ -575,14 +575,13 @@ public class CountTest {
     when(noise.computeConfidenceInterval(anyLong(), anyInt(), anyLong(), anyDouble(), anyDouble(), anyDouble()))
             .thenAnswer(invocation -> new LaplaceNoise().computeConfidenceInterval(
                     (Long) invocation.getArguments()[0],  (Integer) invocation.getArguments()[1], (Long) invocation.getArguments()[2],
-                    (Double) invocation.getArguments()[3],  (Double) invocation.getArguments()[4],  (Double) invocation.getArguments()[5]));
+                    (Double) invocation.getArguments()[3],  null,  (Double) invocation.getArguments()[5]));
     // Mock the noise mechanism.
-    //when(noise.getMechanismType()).thenReturn(LAPLACE);
-
     count =
             Count.builder()
                     .epsilon(0.1)
                     .noise(noise)
+                    .delta(0.5)
                     .maxPartitionsContributed(1)
                     .build();
     count.incrementBy(10);
