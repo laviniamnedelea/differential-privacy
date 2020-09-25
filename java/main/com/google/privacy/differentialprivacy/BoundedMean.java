@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
 public class BoundedMean {
   private final BoundedMean.Params params;
   private final BoundedSum normalizedSum;
-  private final Count count;
+  private final BoundedSum count;
   /**
    * The midpoint between lower and upper bounds. It cannot be set by the user: it will be
    * calculated based on the {@link Params#lower()} and {@link Params#upper()} values.
@@ -90,26 +90,28 @@ public class BoundedMean {
     //
     // the rest follows from the code.
     normalizedSum =
-        BoundedSum.builder()
-            .noise(params.noise())
-            .epsilon(halfEpsilon)
-            // TODO: this can be optimized for the Gaussian noise
-            .delta(halfDelta)
-            .maxPartitionsContributed(params.maxPartitionsContributed())
-            .maxContributionsPerPartition(params.maxContributionsPerPartition())
-            .lower(-maxDistFromMidpoint)
-            .upper(maxDistFromMidpoint)
-            .build();
+            BoundedSum.builder()
+                    .noise(params.noise())
+                    .epsilon(halfEpsilon)
+                    // TODO: this can be optimized for the Gaussian noise
+                    .delta(halfDelta)
+                    .maxPartitionsContributed(params.maxPartitionsContributed())
+                    .maxContributionsPerPartition(params.maxContributionsPerPartition())
+                    .lower(-maxDistFromMidpoint)
+                    .upper(maxDistFromMidpoint)
+                    .build();
     // Noised count of the entities.
     count =
-        Count.builder()
-            .noise(params.noise())
-            .epsilon(halfEpsilon)
-            // TODO: this can be optimized for the Gaussian noise
-            .delta(halfDelta)
-            .maxPartitionsContributed(params.maxPartitionsContributed())
-            .maxContributionsPerPartition(params.maxContributionsPerPartition())
-            .build();
+            BoundedSum.builder()
+                    .noise(params.noise())
+                    .epsilon(halfEpsilon)
+                    // TODO: this can be optimized for the Gaussian noise
+                    .delta(halfDelta)
+                    .maxPartitionsContributed(params.maxPartitionsContributed())
+                    .maxContributionsPerPartition(params.maxContributionsPerPartition())
+                    .lower(0)
+                    .upper(1)
+                    .build();
   }
 
   public static BoundedMean.Params.Builder builder() {
@@ -120,7 +122,7 @@ public class BoundedMean {
   public void addEntry(double e) {
     if (resultReturned) {
       throw new IllegalStateException(
-          "The mean has already been calculated and returned. It cannot be amended.");
+              "The mean has already been calculated and returned. It cannot be amended.");
     }
 
     // NaN is ignored because introducing even a single NaN entry will result in a NaN mean
@@ -133,7 +135,7 @@ public class BoundedMean {
     // BoundedSum will also attempt to clamp the input value but we do it here for transparency.
     normalizedSum.addEntry(clamp(e) - midpoint);
 
-    count.increment();
+    count.addEntry(1);
   }
 
   /** Clamps the input values and adds them to the average. */
@@ -167,7 +169,7 @@ public class BoundedMean {
 
     resultReturned = true;
 
-    long noisedCount = Math.max(1, count.computeResult());
+    double noisedCount = Math.max(1, count.computeResult());
     double normalizedNoisedSum = normalizedSum.computeResult();
 
     // Clamp the average before returning it to ensure it does not exceed the lower and upper
